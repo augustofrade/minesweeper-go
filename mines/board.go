@@ -7,7 +7,8 @@ import (
 
 type Board struct {
 	Size      shared.Size
-	Mines     [][]Mine
+	MineGrid  [][]*Mine
+	MineList  []*Mine
 	MineCount int
 	MineSize  int
 	Offset    shared.Point
@@ -24,24 +25,42 @@ func NewEmptyBoard(size shared.Size) Board {
 	}
 
 	board := Board{
-		Mines:    make([][]Mine, size.Width),
+		MineGrid: make([][]*Mine, size.Width),
 		Size:     size,
 		MineSize: mineSize,
 		Offset: shared.Point{
-			X: (game.ScreenSize.Width - (mineSize * size.Width)) / 2,
-			Y: (game.ScreenSize.Height - (mineSize * size.Height)) / 2,
+			X: 0,
+			Y: 0,
 		},
 	}
+
+	board.UpdateWindowOffset()
 
 	return board
 }
 
+func (board *Board) UpdateWindowOffset() {
+	game := gamestate.Instance()
+	board.Offset.X = (game.ScreenSize.Width - (board.MineSize * board.Size.Width)) / 2
+	board.Offset.Y = (game.ScreenSize.Height - (board.MineSize * board.Size.Height)) / 2
+}
+
+func (board *Board) UpdateMinesPositionOnScreen() {
+	for col := 0; col < board.Size.Width; col++ {
+		for row := 0; row < board.Size.Height; row++ {
+			mine := board.MineGrid[col][row]
+			mine.Position.X = board.getMineXPosition(col)
+			mine.Position.Y = board.getMineYPosition(row)
+		}
+	}
+}
+
 func (board *Board) CreateMines() {
 	for col := 0; col < board.Size.Width; col++ {
-		board.Mines[col] = make([]Mine, board.Size.Height)
+		board.MineGrid[col] = make([]*Mine, board.Size.Height)
 		for row := 0; row < board.Size.Height; row++ {
-			mineX := (board.MineSize * col) + board.Offset.X
-			mineY := (board.MineSize * row) + board.Offset.Y
+			mineX := board.getMineXPosition(col)
+			mineY := board.getMineYPosition(row)
 
 			mine := NewMine(shared.Point{X: mineX, Y: mineY}, shared.Size{
 				Width:  board.MineSize,
@@ -49,7 +68,8 @@ func (board *Board) CreateMines() {
 			})
 
 			mine.TextureRect = gamestate.Instance().GetDefaultTileTextureRect()
-			board.Mines[col][row] = *mine
+			board.MineGrid[col][row] = mine
+			board.MineList = append(board.MineList, mine)
 			board.MineCount++
 		}
 	}
@@ -59,7 +79,15 @@ func (board *Board) Draw() {
 
 	for col := 0; col < board.Size.Width; col++ {
 		for row := 0; row < board.Size.Height; row++ {
-			board.Mines[col][row].Draw()
+			board.MineGrid[col][row].Draw()
 		}
 	}
+}
+
+func (board *Board) getMineXPosition(col int) int {
+	return (board.MineSize * col) + board.Offset.X
+}
+
+func (board *Board) getMineYPosition(row int) int {
+	return (board.MineSize * row) + board.Offset.Y
 }

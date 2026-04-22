@@ -21,6 +21,7 @@ func main() {
 	board.CreateMines()
 
 	rl.SetTargetFPS(60)
+	rl.SetWindowState(rl.FlagWindowResizable)
 
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
@@ -32,6 +33,13 @@ func main() {
 		rl.DrawText(fmt.Sprintf("Mine Amount = %d", board.MineCount), 20, 70, 30, rl.Black)
 		rl.DrawText(fmt.Sprintf("Mine Size   = %d", board.MineSize), 20, 100, 30, rl.Black)
 		rl.DrawText(fmt.Sprintf("Offset 		 = %d, %d", board.Offset.X, board.Offset.Y), 20, 130, 30, rl.Black)
+
+		if rl.IsWindowResized() {
+			game.SetWindowSize(rl.GetScreenWidth(), rl.GetScreenHeight())
+			// TODO: implement board rect size for better responsiveness
+			board.UpdateWindowOffset()
+			board.UpdateMinesPositionOnScreen()
+		}
 
 		rl.EndDrawing()
 	}
