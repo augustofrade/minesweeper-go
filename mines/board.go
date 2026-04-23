@@ -5,12 +5,15 @@ import (
 	"github.com/augustofrade/minesweeper-go/shared"
 )
 
+var MaxRectWidth int = 1000
+
 type Board struct {
+	RectWidth int
 	Size      shared.Size
 	MineGrid  [][]*Mine
 	MineList  []*Mine
 	MineCount int
-	MineSize  int
+	MineSize  *int
 	Offset    shared.Point
 }
 
@@ -18,16 +21,19 @@ func NewEmptyBoard(size shared.Size) Board {
 
 	game := gamestate.Instance()
 
-	mineSize := game.ScreenSize.Width / size.Width
+	rectWidth := min(game.ScreenSize.Width, MaxRectWidth)
+
+	mineSize := rectWidth / size.Width
 
 	if size.Height == 0 {
 		size.Height = game.ScreenSize.Height / mineSize
 	}
 
 	board := Board{
-		MineGrid: make([][]*Mine, size.Width),
-		Size:     size,
-		MineSize: mineSize,
+		RectWidth: rectWidth,
+		MineGrid:  make([][]*Mine, size.Width),
+		Size:      size,
+		MineSize:  &mineSize,
 		Offset: shared.Point{
 			X: 0,
 			Y: 0,
@@ -41,8 +47,13 @@ func NewEmptyBoard(size shared.Size) Board {
 
 func (board *Board) UpdateWindowOffset() {
 	game := gamestate.Instance()
-	board.Offset.X = (game.ScreenSize.Width - (board.MineSize * board.Size.Width)) / 2
-	board.Offset.Y = (game.ScreenSize.Height - (board.MineSize * board.Size.Height)) / 2
+	board.Offset.X = (game.ScreenSize.Width - (*board.MineSize * board.Size.Width)) / 2
+	board.Offset.Y = (game.ScreenSize.Height - (*board.MineSize * board.Size.Height)) / 2
+}
+
+func (board *Board) UpdateRectWidth() {
+	game := gamestate.Instance()
+	board.RectWidth = game.ScreenSize.Width
 }
 
 func (board *Board) UpdateMinesPositionOnScreen() {
@@ -62,10 +73,7 @@ func (board *Board) CreateMines() {
 			mineX := board.getMineXPosition(col)
 			mineY := board.getMineYPosition(row)
 
-			mine := NewMine(shared.Point{X: mineX, Y: mineY}, shared.Size{
-				Width:  board.MineSize,
-				Height: board.MineSize,
-			})
+			mine := NewMine(shared.Point{X: mineX, Y: mineY}, board.MineSize)
 
 			mine.TextureRect = gamestate.Instance().GetDefaultTileTextureRect()
 			board.MineGrid[col][row] = mine
@@ -85,9 +93,9 @@ func (board *Board) Draw() {
 }
 
 func (board *Board) getMineXPosition(col int) int {
-	return (board.MineSize * col) + board.Offset.X
+	return (*board.MineSize * col) + board.Offset.X
 }
 
 func (board *Board) getMineYPosition(row int) int {
-	return (board.MineSize * row) + board.Offset.Y
+	return (*board.MineSize * row) + board.Offset.Y
 }

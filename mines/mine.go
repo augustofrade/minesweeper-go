@@ -10,11 +10,11 @@ type Mine struct {
 	Uncovered   bool
 	TextureRect *rl.Rectangle
 	Position    shared.Point
-	Size        shared.Size
+	Size        *int
 	HasBomb     bool
 }
 
-func NewMine(position shared.Point, size shared.Size) *Mine {
+func NewMine(position shared.Point, size *int) *Mine {
 	return &Mine{
 		Uncovered: false,
 		Position:  position,
@@ -27,8 +27,8 @@ func (mine *Mine) Draw() {
 	destRect := rl.NewRectangle(
 		pos.X,
 		pos.Y,
-		float32(mine.Size.Width),
-		float32(mine.Size.Height),
+		float32(*mine.Size),
+		float32(*mine.Size),
 	)
 
 	rl.DrawTexturePro(gamestate.Instance().Spritesheet, *mine.TextureRect, destRect, rl.NewVector2(0, 0), 0, rl.White)
