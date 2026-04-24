@@ -1,8 +1,6 @@
 package mines
 
 import (
-	"fmt"
-
 	gamestate "github.com/augustofrade/minesweeper-go/game"
 	"github.com/augustofrade/minesweeper-go/shared"
 	rl "github.com/gen2brain/raylib-go/raylib"
@@ -19,14 +17,14 @@ type Mine struct {
 	IsRevealed  bool
 }
 
-func NewMine(bounds rl.Rectangle, gridCoords *shared.Point, size *int) *Mine {
-	fmt.Println(bounds)
+func NewMine(bounds rl.Rectangle, gridCoords *shared.Point, size *int, hasBomb bool) *Mine {
 	return &Mine{
 		Uncovered:  false,
 		Bounds:     &bounds,
 		GridCoords: gridCoords,
 		Size:       size,
 		IsFlagged:  false,
+		HasBomb:    hasBomb,
 	}
 }
 
@@ -57,15 +55,23 @@ func (mine *Mine) Flag() {
 }
 
 func (mine *Mine) Reveal(bombAmount int) {
-	if mine.IsRevealed {
+	if !mine.CanBeInteracted() {
 		return
 	}
 
 	mine.IsRevealed = true
+	if mine.HasBomb {
+		mine.TextureRect = gamestate.Instance().GetBombTileTextureRect()
+		return
+	}
 
 	if bombAmount == 0 {
 		mine.TextureRect = gamestate.Instance().GetEmptyTileTextureRect()
 	} else {
 		mine.TextureRect = gamestate.Instance().GetTextureRectForMineNumber(bombAmount)
 	}
+}
+
+func (mine *Mine) CanBeInteracted() bool {
+	return !mine.IsFlagged && !mine.IsRevealed
 }

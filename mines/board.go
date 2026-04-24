@@ -1,6 +1,9 @@
 package mines
 
 import (
+	"fmt"
+	"math/rand"
+
 	gamestate "github.com/augustofrade/minesweeper-go/game"
 	"github.com/augustofrade/minesweeper-go/shared"
 	rl "github.com/gen2brain/raylib-go/raylib"
@@ -15,10 +18,11 @@ type Board struct {
 	MineList  []*Mine
 	MineCount int
 	MineSize  *int
+	BombCount int
 	Offset    shared.Point
 }
 
-func NewEmptyBoard(size shared.Size) Board {
+func NewEmptyBoard(size shared.Size, bombCount int) Board {
 
 	game := gamestate.Instance()
 
@@ -35,6 +39,7 @@ func NewEmptyBoard(size shared.Size) Board {
 		MineGrid:  make([][]*Mine, size.Width),
 		Size:      size,
 		MineSize:  &mineSize,
+		BombCount: bombCount,
 		Offset: shared.Point{
 			X: 0,
 			Y: 0,
@@ -65,14 +70,20 @@ func (board *Board) handleMineClick(mine *Mine) {
 }
 
 func (board *Board) revealMineAndNeighbors(mine *Mine) {
-	if mine.IsFlagged || mine.IsRevealed {
+	if !mine.CanBeInteracted() {
 		return
 	}
 
 	bombAmount := board.getSurroundingBombAmount(mine)
 	mine.Reveal(bombAmount)
 
-	board.forEachSurroundingMine(mine, board.revealMineAndNeighbors)
+	if mine.HasBomb {
+		panic("a")
+	}
+
+	if bombAmount == 0 {
+		board.forEachSurroundingMine(board.revealMineAndNeighbors, mine, true)
+	}
 }
 
 func (board *Board) handleMineFlagClick(mine *Mine) {
@@ -118,12 +129,21 @@ func (board *Board) UpdateMinesPositionOnScreen() {
 }
 
 func (board *Board) CreateMines() {
+	createdBombs := 0
+	rand.Seed(1)
 
 	for col := 0; col < board.Size.Width; col++ {
 		board.MineGrid[col] = make([]*Mine, board.Size.Height)
 		for row := 0; row < board.Size.Height; row++ {
 			mineX := board.getMineXPosition(col)
 			mineY := board.getMineYPosition(row)
+
+			hasBomb := false
+			if createdBombs < board.BombCount {
+				hasBomb = rand.Float32() < 0.5
+				fmt.Println(hasBomb)
+				createdBombs++
+			}
 
 			mine := NewMine(rl.Rectangle{
 				X:      float32(mineX),
@@ -135,7 +155,8 @@ func (board *Board) CreateMines() {
 					X: col,
 					Y: row,
 				},
-				board.MineSize)
+				board.MineSize,
+				hasBomb)
 
 			mine.TextureRect = gamestate.Instance().GetDefaultTileTextureRect()
 			board.MineGrid[col][row] = mine
@@ -164,15 +185,15 @@ func (board *Board) getMineYPosition(row int) int {
 
 func (board *Board) getSurroundingBombAmount(mine *Mine) int {
 	amount := 0
-	board.forEachSurroundingMine(mine, func(foundMine *Mine) {
+	board.forEachSurroundingMine(func(foundMine *Mine) {
 		if foundMine.HasBomb {
 			amount++
 		}
-	})
+	}, mine, false)
 	return amount
 }
 
-func (board *Board) forEachSurroundingMine(mine *Mine, callback func(foundMine *Mine)) {
+func (board *Board) forEachSurroundingMine(callback func(foundMine *Mine), mine *Mine, ignoreCorners bool) {
 	grid := board.MineGrid
 	x := mine.GridCoords.X
 	y := mine.GridCoords.Y
@@ -183,11 +204,11 @@ func (board *Board) forEachSurroundingMine(mine *Mine, callback func(foundMine *
 		callback(grid[x-1][y])
 	}
 	// top-left
-	if x > 0 && y > 0 {
+	if !ignoreCorners && x > 0 && y > 0 {
 		callback(grid[x-1][y-1])
 	}
 	// bottom-left
-	if x > 0 && y < max.Height-1 {
+	if !ignoreCorners && x > 0 && y < max.Height-1 {
 		callback(grid[x-1][y+1])
 	}
 	// top
@@ -199,7 +220,7 @@ func (board *Board) forEachSurroundingMine(mine *Mine, callback func(foundMine *
 		callback(grid[x][y+1])
 	}
 	// top-right
-	if x < max.Width-1 && y > 0 {
+	if !ignoreCorners && x < max.Width-1 && y > 0 {
 		callback(grid[x+1][y-1])
 	}
 	// right
@@ -207,7 +228,7 @@ func (board *Board) forEachSurroundingMine(mine *Mine, callback func(foundMine *
 		callback(grid[x+1][y])
 	}
 	// bottom-right
-	if x < max.Width-1 && y < max.Height-1 {
+	if !ignoreCorners && x < max.Width-1 && y < max.Height-1 {
 		callback(grid[x+1][y+1])
 	}
 }

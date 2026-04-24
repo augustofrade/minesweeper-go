@@ -17,7 +17,7 @@ func main() {
 
 	game := gamestate.Instance()
 	game.SetWindowSize(windowWidth, windowHeight)
-	board := mines.NewEmptyBoard(shared.Size{Width: 10})
+	board := mines.NewEmptyBoard(shared.Size{Width: 10}, 90)
 	board.CreateMines()
 
 	var mousePosition rl.Vector2
@@ -50,9 +50,10 @@ func main() {
 		rl.DrawText(fmt.Sprintf("Board Size  = %d, %d", board.Size.Width, board.Size.Height), 20, 70, 30, rl.Black)
 		rl.DrawText(fmt.Sprintf("Mine Amount = %d", board.MineCount), 20, 100, 30, rl.Black)
 		rl.DrawText(fmt.Sprintf("Mine Size   = %d", *board.MineSize), 20, 130, 30, rl.Black)
-		rl.DrawText(fmt.Sprintf("Offset 		 = %d, %d", board.Offset.X, board.Offset.Y), 20, 160, 30, rl.Black)
-		rl.DrawText(fmt.Sprintf("Mouse 		   = %.2f, %.2f", mousePosition.X, mousePosition.Y), 20, 190, 30, rl.Black)
-		rl.DrawText(fmt.Sprintf("FPS 		     = %d", fps), 20, 220, 30, rl.Black)
+		rl.DrawText(fmt.Sprintf("Bomb Count  = %d", board.BombCount), 20, 160, 30, rl.Black)
+		rl.DrawText(fmt.Sprintf("Offset 		 = %d, %d", board.Offset.X, board.Offset.Y), 20, 190, 30, rl.Black)
+		rl.DrawText(fmt.Sprintf("Mouse 		   = %.2f, %.2f", mousePosition.X, mousePosition.Y), 20, 220, 30, rl.Black)
+		rl.DrawText(fmt.Sprintf("FPS 		     = %d", fps), 20, 250, 30, rl.Black)
 
 		rl.EndDrawing()
 	}
