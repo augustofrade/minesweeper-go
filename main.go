@@ -20,11 +20,15 @@ func main() {
 	board := mines.NewEmptyBoard(shared.Size{Width: 10})
 	board.CreateMines()
 
+	var mousePosition rl.Vector2
+
 	rl.SetTargetFPS(60)
 	rl.SetWindowState(rl.FlagWindowResizable)
 	bg := rl.NewColor(236, 228, 215, 1)
 
 	for !rl.WindowShouldClose() {
+		mousePosition = rl.GetMousePosition()
+
 		if rl.IsWindowResized() {
 			game.SetWindowSize(rl.GetScreenWidth(), rl.GetScreenHeight())
 			board.UpdateRectWidth()
@@ -32,6 +36,8 @@ func main() {
 			board.UpdateMineSize()
 			board.UpdateMinesPositionOnScreen()
 		}
+
+		board.HandleMouseClicks(&mousePosition)
 
 		rl.BeginDrawing()
 
@@ -43,6 +49,7 @@ func main() {
 		rl.DrawText(fmt.Sprintf("Mine Amount = %d", board.MineCount), 20, 100, 30, rl.Black)
 		rl.DrawText(fmt.Sprintf("Mine Size   = %d", *board.MineSize), 20, 130, 30, rl.Black)
 		rl.DrawText(fmt.Sprintf("Offset 		 = %d, %d", board.Offset.X, board.Offset.Y), 20, 160, 30, rl.Black)
+		rl.DrawText(fmt.Sprintf("Mouse 		   = %.2f, %.2f", mousePosition.X, mousePosition.Y), 20, 190, 30, rl.Black)
 
 		rl.EndDrawing()
 	}

@@ -3,9 +3,10 @@ package mines
 import (
 	gamestate "github.com/augustofrade/minesweeper-go/game"
 	"github.com/augustofrade/minesweeper-go/shared"
+	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
-var MaxRectWidth int = 1000
+const MaxRectWidth int = 1000
 
 type Board struct {
 	RectWidth int
@@ -45,6 +46,28 @@ func NewEmptyBoard(size shared.Size) Board {
 	return board
 }
 
+func (board *Board) HandleMouseClicks(mousePosition *rl.Vector2) {
+	for _, mine := range board.MineList {
+		if rl.IsMouseButtonReleased(rl.MouseLeftButton) && rl.CheckCollisionPointRec(*mousePosition, *mine.Bounds) {
+			handleMineClick(mine)
+			return
+		}
+
+		if rl.IsMouseButtonReleased(rl.MouseRightButton) && rl.CheckCollisionPointRec(*mousePosition, *mine.Bounds) {
+			handleMineFlagClick(mine)
+			return
+		}
+	}
+}
+
+func handleMineClick(mine *Mine) {
+	return
+}
+
+func handleMineFlagClick(mine *Mine) {
+	mine.Flag()
+}
+
 func (board *Board) UpdateWindowOffset() {
 	game := gamestate.Instance()
 	board.Offset.X = (game.ScreenSize.Width - (*board.MineSize * board.Size.Width)) / 2
@@ -64,23 +87,40 @@ func (board *Board) UpdateMineSize() {
 }
 
 func (board *Board) UpdateMinesPositionOnScreen() {
+	mineSize := float32(*board.MineSize)
+
 	for col := 0; col < board.Size.Width; col++ {
 		for row := 0; row < board.Size.Height; row++ {
 			mine := board.MineGrid[col][row]
-			mine.Position.X = board.getMineXPosition(col)
-			mine.Position.Y = board.getMineYPosition(row)
+
+			mineX := board.getMineXPosition(col)
+			mineY := board.getMineYPosition(row)
+			mine.Bounds = &rl.Rectangle{
+				X:      float32(mineX),
+				Y:      float32(mineY),
+				Width:  mineSize,
+				Height: mineSize,
+			}
+
 		}
 	}
 }
 
 func (board *Board) CreateMines() {
+
 	for col := 0; col < board.Size.Width; col++ {
 		board.MineGrid[col] = make([]*Mine, board.Size.Height)
 		for row := 0; row < board.Size.Height; row++ {
 			mineX := board.getMineXPosition(col)
 			mineY := board.getMineYPosition(row)
 
-			mine := NewMine(shared.Point{X: mineX, Y: mineY}, board.MineSize)
+			mine := NewMine(rl.Rectangle{
+				X:      float32(mineX),
+				Y:      float32(mineY),
+				Width:  float32(*board.MineSize),
+				Height: float32(*board.MineSize),
+			},
+				board.MineSize)
 
 			mine.TextureRect = gamestate.Instance().GetDefaultTileTextureRect()
 			board.MineGrid[col][row] = mine
