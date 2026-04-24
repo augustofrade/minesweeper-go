@@ -53,7 +53,13 @@ func (board *Board) UpdateWindowOffset() {
 
 func (board *Board) UpdateRectWidth() {
 	game := gamestate.Instance()
-	board.RectWidth = game.ScreenSize.Width
+	board.RectWidth = min(game.ScreenSize.Width, MaxRectWidth)
+}
+
+func (board *Board) UpdateMineSize() {
+	// TODO: fiz this to use height as well, otherwise mines get pushed outside the top and bottom of the screen
+	mineSize := board.RectWidth / board.Size.Width
+	*board.MineSize = mineSize
 }
 
 func (board *Board) UpdateMinesPositionOnScreen() {
