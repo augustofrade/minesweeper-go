@@ -57,9 +57,10 @@ func (board *Board) UpdateRectWidth() {
 }
 
 func (board *Board) UpdateMineSize() {
-	// TODO: fiz this to use height as well, otherwise mines get pushed outside the top and bottom of the screen
 	mineSize := board.RectWidth / board.Size.Width
-	*board.MineSize = mineSize
+	if mineSize*board.Size.Height < gamestate.Instance().ScreenSize.Height {
+		*board.MineSize = mineSize
+	}
 }
 
 func (board *Board) UpdateMinesPositionOnScreen() {
