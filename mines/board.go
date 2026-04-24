@@ -49,22 +49,33 @@ func NewEmptyBoard(size shared.Size) Board {
 func (board *Board) HandleMouseClicks(mousePosition *rl.Vector2) {
 	for _, mine := range board.MineList {
 		if rl.IsMouseButtonReleased(rl.MouseLeftButton) && rl.CheckCollisionPointRec(*mousePosition, *mine.Bounds) {
-			handleMineClick(mine)
+			board.handleMineClick(mine)
 			return
 		}
 
 		if rl.IsMouseButtonReleased(rl.MouseRightButton) && rl.CheckCollisionPointRec(*mousePosition, *mine.Bounds) {
-			handleMineFlagClick(mine)
+			board.handleMineFlagClick(mine)
 			return
 		}
 	}
 }
 
-func handleMineClick(mine *Mine) {
-	return
+func (board *Board) handleMineClick(mine *Mine) {
+	board.revealMineAndNeighbors(mine)
 }
 
-func handleMineFlagClick(mine *Mine) {
+func (board *Board) revealMineAndNeighbors(mine *Mine) {
+	if mine.IsFlagged || mine.IsRevealed {
+		return
+	}
+
+	bombAmount := board.getSurroundingBombAmount(mine)
+	mine.Reveal(bombAmount)
+
+	board.forEachSurroundingMine(mine, board.revealMineAndNeighbors)
+}
+
+func (board *Board) handleMineFlagClick(mine *Mine) {
 	mine.Flag()
 }
 
@@ -120,6 +131,10 @@ func (board *Board) CreateMines() {
 				Width:  float32(*board.MineSize),
 				Height: float32(*board.MineSize),
 			},
+				&shared.Point{
+					X: col,
+					Y: row,
+				},
 				board.MineSize)
 
 			mine.TextureRect = gamestate.Instance().GetDefaultTileTextureRect()
@@ -145,4 +160,54 @@ func (board *Board) getMineXPosition(col int) int {
 
 func (board *Board) getMineYPosition(row int) int {
 	return (*board.MineSize * row) + board.Offset.Y
+}
+
+func (board *Board) getSurroundingBombAmount(mine *Mine) int {
+	amount := 0
+	board.forEachSurroundingMine(mine, func(foundMine *Mine) {
+		if foundMine.HasBomb {
+			amount++
+		}
+	})
+	return amount
+}
+
+func (board *Board) forEachSurroundingMine(mine *Mine, callback func(foundMine *Mine)) {
+	grid := board.MineGrid
+	x := mine.GridCoords.X
+	y := mine.GridCoords.Y
+	max := board.Size
+
+	// left
+	if x > 0 {
+		callback(grid[x-1][y])
+	}
+	// top-left
+	if x > 0 && y > 0 {
+		callback(grid[x-1][y-1])
+	}
+	// bottom-left
+	if x > 0 && y < max.Height-1 {
+		callback(grid[x-1][y+1])
+	}
+	// top
+	if y > 0 {
+		callback(grid[x][y-1])
+	}
+	// bottom
+	if y < max.Height-1 {
+		callback(grid[x][y+1])
+	}
+	// top-right
+	if x < max.Width-1 && y > 0 {
+		callback(grid[x+1][y-1])
+	}
+	// right
+	if x < max.Width-1 {
+		callback(grid[x+1][y])
+	}
+	// bottom-right
+	if x < max.Width-1 && y < max.Height-1 {
+		callback(grid[x+1][y+1])
+	}
 }
