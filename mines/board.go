@@ -22,6 +22,17 @@ type Board struct {
 	Offset    shared.Point
 }
 
+func NewEasyBoard() Board {
+	return NewEmptyBoard(shared.Size{Width: 9, Height: 9}, 10)
+}
+
+func NewMediumBoard() Board {
+	return NewEmptyBoard(shared.Size{Width: 16, Height: 16}, 40)
+}
+func NewHardBoard() Board {
+	return NewEmptyBoard(shared.Size{Width: 30, Height: 16}, 99)
+}
+
 func NewEmptyBoard(size shared.Size, bombCount int) Board {
 
 	game := gamestate.Instance()
