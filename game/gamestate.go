@@ -29,7 +29,7 @@ func create() *GameState {
 	game.SpriteSize = float32(game.Spritesheet.Width / int32(maxBombs))
 
 	for i := 1; i <= maxBombs; i++ {
-		game.createTextureRect(fmt.Sprintf("mine_%d", i), shared.Point{X: 1, Y: 0})
+		game.createTextureRect(fmt.Sprintf("mine_%d", i), shared.Point{X: i - 1, Y: 0})
 	}
 
 	game.createTextureRect("empty", shared.Point{X: 0, Y: 1})
@@ -53,7 +53,7 @@ func (game *GameState) SetWindowSize(width int, height int) {
 }
 
 func (game *GameState) GetTextureRectForMineNumber(number int) *rl.Rectangle {
-	textureRect := game.textureRects[fmt.Sprint(number)]
+	textureRect := game.textureRects["mine_"+fmt.Sprint(number)]
 	if textureRect == nil {
 		panic("Invalid texture")
 	}
